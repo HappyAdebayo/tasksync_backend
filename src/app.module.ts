@@ -22,7 +22,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         autoLoadModels: true,
-        synchronize: true,
+        synchronize: false,
       }),
     }),
 

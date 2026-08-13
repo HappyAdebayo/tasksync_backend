@@ -5,7 +5,9 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Board } from './boards.model';
 
 @Module({
-
+  imports:[
+        SequelizeModule.forFeature([Board]),
+      ],
   controllers: [BoardsController],
   providers: [BoardsService]
 })

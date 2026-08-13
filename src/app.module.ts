@@ -9,6 +9,7 @@ import { BoardListModule } from './board_list/board_list.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { InvitationsModule } from './invitations/invitations.module';
 
 @Module({
   imports: [
@@ -45,6 +46,8 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
 
     AuthModule,
+
+    InvitationsModule,
   ],
   providers: [BoardService],
 })

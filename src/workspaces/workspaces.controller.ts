@@ -1,18 +1,28 @@
-import { Body, Controller, Post, Get } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UseGuards, Req } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { WorkspacesService } from './workspaces.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('workspaces')
 export class WorkspacesController {
      constructor(private readonly workspacesService: WorkspacesService) {}
 
+    @UseGuards(JwtAuthGuard)
     @Post()
-    create(@Body() body:CreateWorkspaceDto){
-        return this.workspacesService.create(body);
+    create(@Body() body:CreateWorkspaceDto, @Req() req:Request){
+        return this.workspacesService.create(body, req);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get()
     index(){
        return this.workspacesService.index();
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':id')
+    findAll(@Param('id') id:string){
+        return this.workspacesService.findAll(id)
+    }
+    
 }

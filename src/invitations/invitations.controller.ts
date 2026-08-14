@@ -4,7 +4,8 @@ import {
   Param,
   Post,
   UseGuards,
-  Req
+  Req,
+  Get
 } from '@nestjs/common';
 import { InvitationsService } from './invitations.service';
 import { CreateInvitationDto } from './dto/invitations.dto';
@@ -24,13 +25,19 @@ export class InvitationsController {
 
   @UseGuards(JwtAuthGuard)
   @Post(':token/accept')
-  accept(@Param('token') token: string) {
-    return this.invitationsService.accept(token);
+  accept(@Param('token') token: string, @Req() req:Request) {
+    return this.invitationsService.accept(token, req);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':token/decline')
   decline(@Param('token') token: string) {
     return this.invitationsService.decline(token);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  index(@Req() req:Request) {
+    return this.invitationsService.index(req);
   }
 }

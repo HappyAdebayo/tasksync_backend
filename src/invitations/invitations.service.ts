@@ -8,6 +8,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { Invitation } from './invitations.model';
 import { Notification } from 'src/notifications/notifications.model';
 import { User } from 'src/users/users.model';
+import { WorkspaceMember } from 'src/workspace_members/workspace_member.model';
 import { CreateInvitationDto } from './dto/invitations.dto';
 import * as crypto from 'crypto';
 
@@ -23,82 +24,175 @@ export class InvitationsService {
     @InjectModel(User)
     private readonly userModel: typeof User,
 
+    @InjectModel(WorkspaceMember)
+    private readonly workspaceMemberModel: typeof WorkspaceMember,
+
     @InjectConnection()
     private readonly sequelize: Sequelize,
   ) {}
 
-  async invite(body: CreateInvitationDto, req) {
-    const token = crypto.randomBytes(32).toString('hex');
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    const invitedUser= await this.userModel.findOne({
-      where:{
-        email:body.email
-      }
-    })
-    
-    return this.sequelize.transaction(async (transaction) => {
-    const invitation = await this.invitationModel.create({
-      workspaceId: body.workspaceId,
+  async invite(body: CreateInvitationDto, req: any) {
+  const invitedUser = await this.userModel.findOne({
+    where: {
       email: body.email,
-      token,
-      status: 'pending',
-      expiresAt,
-      invitedBy : req.user.id
-    });
-
-    if (invitedUser) {
-          await this.notificationModel.create(
-            {
-              userId: invitedUser.id,
-              title: 'You are invited into a workspace',
-              message:
-                'You have been invited to join a workspace. Please check your email for the invitation link.',
-            },
-            {
-              transaction,
-            },
-          );
-        }
-
-    return invitation;
+    },
   });
+
+
+  
+  if (!invitedUser) {
+    throw new NotFoundException(
+      'User not found',
+    );
   }
 
-  async accept(token: string) {
-    const invitation = await this.invitationModel.findOne({
+  if (invitedUser?.id === req.user.id) {
+    throw new BadRequestException(
+      'You cannot invite yourself',
+    );
+  }
+
+  // If the user exists, check if they are already a member
+  if (invitedUser) {
+    const existingMember = await this.workspaceMemberModel.findOne({
       where: {
-        token,
+        workspaceId: body.workspaceId,
+        userId: invitedUser.id,
       },
     });
 
-    if (!invitation) {
-      throw new NotFoundException('Invitation not found');
-    }
-
-    if (invitation.status !== 'pending') {
+    if (existingMember) {
       throw new BadRequestException(
-        'This invitation is no longer pending',
+        'This user is already a member of the workspace',
+      );
+    }
+  }
+
+  // Check if there is already a pending invitation
+  const existingInvitation = await this.invitationModel.findOne({
+    where: {
+      workspaceId: body.workspaceId,
+      email: body.email,
+      status: 'pending',
+    },
+  });
+
+  if (existingInvitation) {
+    throw new BadRequestException(
+      'An invitation has already been sent to this user',
+    );
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  return this.sequelize.transaction(async (transaction) => {
+    // Create invitation
+    const invitation = await this.invitationModel.create(
+      {
+        workspaceId: body.workspaceId,
+        email: body.email,
+        token,
+        status: 'pending',
+        expiresAt,
+        invitedBy: req.user.id,
+        role: body.role
+      },
+      {
+        transaction,
+      },
+    );
+
+    // Only create notification if the invited email
+    // belongs to an existing user
+    if (invitedUser) {
+      await this.notificationModel.create(
+        {
+          userId: invitedUser.id,
+          invitationId: invitation.id,
+          title: 'You are invited into a workspace',
+          message:
+            'You have been invited to join a workspace. Please check your notifications to respond.',
+        },
+        {
+          transaction,
+        },
       );
     }
 
-    if (new Date() > invitation.expiresAt) {
-      await invitation.update({
-        status: 'expired',
+    return invitation;
+  });
+}
+
+  async accept(token: string, req: any) {
+    return this.sequelize.transaction(async (transaction) => {
+      const invitation = await this.invitationModel.findOne({
+        where: {
+          token,
+        },
+        transaction,
       });
 
-      throw new BadRequestException('Invitation has expired');
-    }
+      if (!invitation) {
+        throw new NotFoundException('Invitation not found');
+      }
 
-    await invitation.update({
-      status: 'accepted',
+      if (invitation.status !== 'pending') {
+        throw new BadRequestException(
+          'This invitation is no longer pending',
+        );
+      }
+
+      if (new Date() > invitation.expiresAt) {
+        await invitation.update(
+          {
+            status: 'expired',
+          },
+          { transaction },
+        );
+
+        throw new BadRequestException('Invitation has expired');
+      }
+
+      // Make sure the logged-in user is the person invited
+      const invitedUser = await this.userModel.findOne({
+        where: {
+          id: req.user.id,
+          email: invitation.email,
+        },
+        transaction,
+      });
+
+      if (!invitedUser) {
+        throw new BadRequestException(
+          'This invitation was not sent to your account',
+        );
+      }
+
+      // Make the user a member of the workspace
+      await this.workspaceMemberModel.create(
+        {
+          workspaceId: invitation.workspaceId,
+          userId: req.user.id,
+          role: invitation.role,
+        },
+        { transaction },
+      );
+
+      // Mark invitation as accepted
+      await invitation.update(
+        {
+          status: 'accepted',
+        },
+        { transaction },
+      );
+
+      return {
+        message: 'Invitation accepted successfully',
+      };
     });
-
-    return {
-      message: 'Invitation accepted successfully',
-    };
   }
 
   async decline(token: string) {
@@ -118,12 +212,18 @@ export class InvitationsService {
       );
     }
 
-    await invitation.update({
-      status: 'rejected',
-    });
+    await invitation.destroy();
 
     return {
       message: 'Invitation declined successfully',
     };
+  }
+
+  async index(req){
+    return this.invitationModel.findAll({
+      where:{
+        userId: req.user.id
+      }
+    })
   }
 }

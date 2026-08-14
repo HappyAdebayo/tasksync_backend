@@ -12,7 +12,7 @@ import {
 import { Board } from 'src/boards/boards.model';
 
 @Table({
-  tableName: 'lists',
+  tableName: 'board_lists',
 })
 export class BoardList extends Model {
   @PrimaryKey

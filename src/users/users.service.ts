@@ -1,4 +1,4 @@
-import { Injectable,UnauthorizedException } from '@nestjs/common';
+import { Injectable,UnauthorizedException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './users.model';
 import { CreateUserDto, LoginDto, RefreshTokenDto } from './dto/user.dto';
@@ -14,6 +14,14 @@ export class UsersService {
   ) {}
 
   async create(body: CreateUserDto) {
+    const foundUser= await this.userModel.findOne({
+      where:{
+        email: body.email
+      }
+    })
+    if(foundUser){
+        throw new ConflictException('A user with this email already exists');
+    }
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
     const user = await this.userModel.create({

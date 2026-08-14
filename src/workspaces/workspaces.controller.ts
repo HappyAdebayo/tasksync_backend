@@ -15,8 +15,8 @@ export class WorkspacesController {
 
     @UseGuards(JwtAuthGuard)
     @Get()
-    index(){
-       return this.workspacesService.index();
+    index(@Req() req:Request){
+       return this.workspacesService.index(req);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -27,8 +27,8 @@ export class WorkspacesController {
 
     @UseGuards(JwtAuthGuard)
     @Delete(':id')
-    Delete(@Param('id') id:string){
-        return this.workspacesService.delete(id)
+    Delete(@Param('id') id:string, @Req() req:Request){
+        return this.workspacesService.delete(id, req)
     }
     
 }

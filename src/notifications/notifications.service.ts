@@ -2,6 +2,7 @@ import { Injectable} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Notification } from './notifications.model';
 import { NotificationDto } from './dto/notifications.dto';
+import { Invitation } from 'src/invitations/invitations.model';
 
 @Injectable()
 export class NotificationsService {
@@ -18,11 +19,17 @@ export class NotificationsService {
     });
   }
 
-  async index(req){
-    return this.notificationModel.findAll({
-        where:{
-            userId:req.user.id
-        }
-    })
-  }
+ async index(req) {
+  return this.notificationModel.findAll({
+    where: {
+      userId: req.user.id,
+    },
+    include: [
+      {
+        model: Invitation,
+        required: false,
+      },
+    ],
+  });
+}
 }

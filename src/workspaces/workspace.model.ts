@@ -7,7 +7,10 @@ import {
   Default,
   CreatedAt,
   UpdatedAt,
+  HasMany,
 } from 'sequelize-typescript';
+
+import { WorkspaceMember } from '../workspace_members/workspace_member.model';
 
 @Table({
   tableName: 'workspaces',
@@ -23,6 +26,9 @@ export class Workspace extends Model {
     allowNull: false,
   })
   declare name: string;
+
+  @HasMany(() => WorkspaceMember)
+  declare members: WorkspaceMember[];
 
   @CreatedAt
   declare createdAt: Date;

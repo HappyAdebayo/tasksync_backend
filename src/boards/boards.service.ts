@@ -9,6 +9,8 @@ export class BoardsService {
     constructor(
         @InjectModel(Board)
         private readonly boardModel: typeof Board,
+
+        @InjectModel(BoardList)
         private readonly boardListModel: typeof BoardList,
     ){}
 

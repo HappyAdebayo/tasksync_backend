@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('invitations', {
+    await queryInterface.createTable('notifications', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -11,18 +11,7 @@ module.exports = {
         allowNull: false,
       },
 
-      workspaceId: {
-        type: Sequelize.UUID,
-        allowNull: false,
-        references: {
-          model: 'workspaces',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-      },
-
-      invitedBy: {
+      userId: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -33,31 +22,31 @@ module.exports = {
         onDelete: 'CASCADE',
       },
 
-      email: {
+      invitationId: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: 'invitations',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+      },
+
+      title: {
         type: Sequelize.STRING,
         allowNull: false,
       },
 
-      token: {
-        type: Sequelize.STRING,
+      message: {
+        type: Sequelize.TEXT,
         allowNull: false,
-        unique: true,
       },
 
-      status: {
-        type: Sequelize.ENUM(
-          'pending',
-          'accepted',
-          'rejected',
-          'expired',
-        ),
+      isRead: {
+        type: Sequelize.BOOLEAN,
         allowNull: false,
-        defaultValue: 'pending',
-      },
-
-      expiresAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
+        defaultValue: false,
       },
 
       createdAt: {
@@ -73,11 +62,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('invitations');
-
-    // PostgreSQL requires the ENUM type to be removed separately.
-    await queryInterface.sequelize.query(
-      'DROP TYPE IF EXISTS "enum_invitations_status";',
-    );
+    await queryInterface.dropTable('notifications');
   },
 };

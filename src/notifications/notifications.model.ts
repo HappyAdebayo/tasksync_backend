@@ -8,8 +8,12 @@ import {
   CreatedAt,
   UpdatedAt,
   ForeignKey,
+  BelongsTo,
 } from 'sequelize-typescript';
-import { User } from '../users/users.model'
+
+import { User } from '../users/users.model';
+import { Invitation } from '../invitations/invitations.model';
+
 @Table({
   tableName: 'notifications',
 })
@@ -25,6 +29,16 @@ export class Notification extends Model {
     allowNull: false,
   })
   declare userId: string;
+
+  @ForeignKey(() => Invitation)
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  declare invitationId: string | null;
+
+  @BelongsTo(() => Invitation)
+  declare invitation: Invitation;
 
   @Column({
     type: DataType.STRING,

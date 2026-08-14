@@ -8,15 +8,16 @@ import {
   CreatedAt,
   UpdatedAt,
   ForeignKey,
+  BelongsTo,
 } from 'sequelize-typescript';
 
 import { Workspace } from '../workspaces/workspace.model';
 import { User } from '../users/users.model';
 
 @Table({
-  tableName: 'invitations',
+  tableName: 'workspace_members',
 })
-export class Invitation extends Model {
+export class WorkspaceMember extends Model {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
@@ -29,55 +30,25 @@ export class Invitation extends Model {
   })
   declare workspaceId: string;
 
+  @BelongsTo(() => Workspace)
+  declare workspace: Workspace;
+
   @ForeignKey(() => User)
   @Column({
     type: DataType.UUID,
     allowNull: false,
   })
-  declare invitedBy: string;
+  declare userId: string;
+
+  @BelongsTo(() => User)
+  declare user: User;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
-  })
-  declare email: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-    unique: true,
-  })
-  declare token: string;
-
-  @Column({
-    type: DataType.ENUM(
-      'pending',
-      'accepted',
-      'rejected',
-      'expired',
-    ),
-    allowNull: false,
-    defaultValue: 'pending',
-  })
-  declare status: 'pending' | 'accepted' | 'rejected' | 'expired';
-
-  // THIS WAS MISSING
-  @Column({
-    type: DataType.ENUM(
-      'owner',
-      'editor',
-      'viewer',
-    ),
     allowNull: false,
     defaultValue: 'viewer',
   })
-  declare role: 'owner' | 'editor' | 'viewer';
-
-  @Column({
-    type: DataType.DATE,
-    allowNull: false,
-  })
-  declare expiresAt: Date;
+  declare role: string;
 
   @CreatedAt
   declare createdAt: Date;

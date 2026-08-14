@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('lists', {
+    await queryInterface.createTable('tasks', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -11,20 +11,26 @@ module.exports = {
         allowNull: false,
       },
 
+      boardListId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: 'board_lists',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
+      },
+
       name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
 
-      boardId: {
-        type: Sequelize.UUID,
+      position: {
+        type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'boards',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
+        defaultValue: 0,
       },
 
       createdAt: {
@@ -40,6 +46,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('lists');
+    await queryInterface.dropTable('tasks');
   },
 };

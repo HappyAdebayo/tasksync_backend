@@ -1,7 +1,7 @@
 import { Injectable,UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './users.model';
-import { CreateUserDto,LoginDto } from './dto/user.dto';
+import { CreateUserDto, LoginDto, RefreshTokenDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
@@ -57,14 +57,58 @@ export class UsersService {
       email: user.email,
     };
 
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+    });
 
     return {
       access_token: accessToken,
+      refresh_token: refreshToken,
         user: {
           name: user.name,
           email: user.email,
         },
     };
+  }
+
+  async refresh(body: RefreshTokenDto) {
+    try {
+      const payload = await this.jwtService.verifyAsync(
+        body.refreshToken,
+      );
+
+      const user = await this.userModel.findByPk(payload.sub);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const newPayload = {
+        sub: user.id,
+        email: user.email,
+      };
+
+      const accessToken = await this.jwtService.signAsync(newPayload, {
+        expiresIn: '15m',
+      });
+
+      const refreshToken = await this.jwtService.signAsync(newPayload, {
+          expiresIn: '7d',
+        });
+
+      return {
+        access_token:  accessToken,
+        refresh_token: refreshToken,
+      };
+
+      } catch {
+        throw new UnauthorizedException(
+          'Invalid or expired refresh token',
+        );
+      }
   }
 }

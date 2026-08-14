@@ -41,4 +41,22 @@ export class BoardsService {
         }
         })
     }
+
+    async delete(id: string) {
+        const board = await this.boardModel.findOne({
+          where: {
+            id,
+          },
+        });
+
+        if (!board) {
+          throw new NotFoundException('Board not found');
+        }
+
+        await board.destroy();
+
+        return {
+          message: 'Board deleted successfully',
+        };
+      }
 }

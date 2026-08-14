@@ -13,6 +13,7 @@ export class BoardListService {
         async create(body: CreateBoardListDto){
           return this.boardListModel.create({
             name: body.name,
+            color: body.color,
             boardId: body.boardId
           })
         }

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UseGuards, Req, Delete } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { WorkspacesService } from './workspaces.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -22,7 +22,13 @@ export class WorkspacesController {
     @UseGuards(JwtAuthGuard)
     @Get(':id')
     findAll(@Param('id') id:string){
-        return this.workspacesService.findAll(id)
+        return this.workspacesService.findAllWorkspaceBoards(id)
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':id')
+    Delete(@Param('id') id:string){
+        return this.workspacesService.delete(id)
     }
     
 }

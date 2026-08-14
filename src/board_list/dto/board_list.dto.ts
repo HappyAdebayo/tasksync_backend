@@ -5,6 +5,10 @@ export class CreateBoardListDto {
     @IsNotEmpty()
     name!: string;
 
+    @IsString()
+    @IsNotEmpty()
+    color!: string;
+
     @IsUUID()
     @IsNotEmpty()
     boardId!: string;

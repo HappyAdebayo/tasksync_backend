@@ -11,6 +11,7 @@ import { User } from 'src/users/users.model';
 import { WorkspaceMember } from 'src/workspace_members/workspace_member.model';
 import { CreateInvitationDto } from './dto/invitations.dto';
 import * as crypto from 'crypto';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class InvitationsService {
@@ -29,6 +30,8 @@ export class InvitationsService {
 
     @InjectConnection()
     private readonly sequelize: Sequelize,
+
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async invite(body: CreateInvitationDto, req: any) {
@@ -37,8 +40,6 @@ export class InvitationsService {
       email: body.email,
     },
   });
-
-
   
   if (!invitedUser) {
     throw new NotFoundException(
@@ -105,21 +106,17 @@ export class InvitationsService {
       },
     );
 
-    // Only create notification if the invited email
-    // belongs to an existing user
     if (invitedUser) {
-      await this.notificationModel.create(
-        {
-          userId: invitedUser.id,
-          invitationId: invitation.id,
-          title: 'You are invited into a workspace',
-          message:
-            'You have been invited to join a workspace. Please check your notifications to respond.',
-        },
-        {
-          transaction,
-        },
-      );
+      await this.notificationsService.create(
+    {
+      userId: invitedUser.id,
+      invitationId: invitation.id,
+      title: 'You are invited into a workspace',
+      message:
+        'You have been invited to join a workspace. Please check your notifications to respond.',
+    },
+    transaction,
+  );
     }
 
     return invitation;

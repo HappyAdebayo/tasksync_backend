@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { BoardsModule } from './boards/boards.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
-// import { BoardService } from './boards/boards.service';
 import { BoardListModule } from './board_list/board_list.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
@@ -11,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { TasksModule } from './tasks/tasks.module';
 import { SearchModule } from './search/search.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -35,24 +35,16 @@ import { SearchModule } from './search/search.module';
     }),
 
     BoardsModule,
-
     WorkspacesModule,
-
     BoardListModule,
-
     NotificationsModule,
-
     UsersModule,
-
     AuthModule,
-
     InvitationsModule,
-
     TasksModule,
-
     SearchModule,
-
+    RealtimeModule,
   ],
-  // providers: [BoardService],
+  providers: [],
 })
 export class AppModule {}

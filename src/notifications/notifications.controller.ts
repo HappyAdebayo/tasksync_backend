@@ -6,11 +6,11 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class NotificationsController {
         constructor(private readonly notificationService: NotificationsService) {}
 
-        @UseGuards(JwtAuthGuard)
-        @Post()
-        create(@Body() body: NotificationDto, @Req() req:Request){
-             return this.notificationService.create(body,req)
-        }
+     //    @UseGuards(JwtAuthGuard)
+     //    @Post()
+     //    create(@Body() body: NotificationDto, @Req() req:Request){
+     //         return this.notificationService.create(body,req)
+     //    }
        
         @UseGuards(JwtAuthGuard)
         @Get()

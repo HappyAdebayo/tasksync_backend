@@ -3,62 +3,71 @@ import { Board } from './boards.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardList } from 'src/board_list/board_list.model';
+import { Task } from 'src/tasks/tasks.model';
 
 @Injectable()
 export class BoardsService {
-    constructor(
-        @InjectModel(Board)
-        private readonly boardModel: typeof Board,
+  constructor(
+    @InjectModel(Board)
+    private readonly boardModel: typeof Board,
 
-        @InjectModel(BoardList)
-        private readonly boardListModel: typeof BoardList,
-    ){}
+    @InjectModel(BoardList)
+    private readonly boardListModel: typeof BoardList,
+  ) {}
 
-    async create(body: CreateBoardDto){
-      return this.boardModel.create({
-        name: body.name,
-        description: body.description,
-        color: body.color,
-        workspaceId: body.workspaceId
-      })
+  async create(body: CreateBoardDto) {
+    return this.boardModel.create({
+      name: body.name,
+      description: body.description,
+      color: body.color,
+      workspaceId: body.workspaceId,
+    });
+  }
+
+  async index() {
+    return this.boardModel.findAll();
+  }
+
+  async findAll(id: string) {
+    const board = await this.boardModel.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!board) {
+      throw new NotFoundException('Board not found');
     }
 
-    async index(){
-        return this.boardModel.findAll();
+    return this.boardListModel.findAll({
+      where: {
+        boardId: board.id,
+      },
+      include: [
+        {
+          model: Task,
+          required: false,
+        },
+      ],
+      order: [['createdAt', 'ASC']],
+    });
+  }
+
+  async delete(id: string) {
+    const board = await this.boardModel.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!board) {
+      throw new NotFoundException('Board not found');
     }
-    async findAll(id:string){
-        let board= await this.boardModel.findOne({
-          where :{
-              id:id,
-            }
-        });
 
-        if (!board) {
-            throw new NotFoundException('Workspace not found');
-        } 
-        
-        return this.boardListModel.findAll({
-        where: {
-          boardId: board.id,
-        }
-        })
-    }
+    await board.destroy();
 
-    async delete(id: string) {
-        const board = await this.boardModel.findOne({
-          where: {
-            id,
-          },
-        });
-
-        if (!board) {
-          throw new NotFoundException('Board not found');
-        }
-
-        await board.destroy();
-
-        return {
-          message: 'Board deleted successfully',
-        };
-      }
+    return {
+      message: 'Board deleted successfully',
+    };
+  }
 }

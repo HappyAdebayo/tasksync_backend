@@ -29,15 +29,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     try {
       const verified = this.jwtService.verify(token);
       if (verified?.sub || verified?.id) return verified.sub || verified.id;
+      return null
     } catch {
-      try {
-        const decoded = this.jwtService.decode(token) as any;
-        if (decoded?.sub || decoded?.id) return decoded.sub || decoded.id;
-      } catch {
-        // Ignore
+        return null
       }
-    }
-    return null;
   }
 
   handleConnection(client: Socket) {

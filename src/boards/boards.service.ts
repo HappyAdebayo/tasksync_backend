@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Board } from './boards.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardList } from 'src/board_list/board_list.model';
 import { Task } from 'src/tasks/tasks.model';
+import { WorkspaceMember } from 'src/workspace_members/workspace_member.model';
 
 @Injectable()
 export class BoardsService {
@@ -13,9 +14,29 @@ export class BoardsService {
 
     @InjectModel(BoardList)
     private readonly boardListModel: typeof BoardList,
+
+    @InjectModel(WorkspaceMember)
+    private readonly workspaceMemberModel: typeof WorkspaceMember,
   ) {}
 
-  async create(body: CreateBoardDto) {
+  async create(body: CreateBoardDto, userId?: string) {
+    if (userId) {
+      const member = await this.workspaceMemberModel.findOne({
+        where: {
+          workspaceId: body.workspaceId,
+          userId,
+        },
+      });
+
+      if (!member) {
+        throw new ForbiddenException('You are not a member of this workspace');
+      }
+
+      if (member.role !== 'owner' && member.role !== 'editor') {
+        throw new ForbiddenException('Only workspace owners and editors can create boards. Viewers have read-only access.');
+      }
+    }
+
     return this.boardModel.create({
       name: body.name,
       description: body.description,
@@ -53,7 +74,7 @@ export class BoardsService {
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId?: string) {
     const board = await this.boardModel.findOne({
       where: {
         id,
@@ -62,6 +83,23 @@ export class BoardsService {
 
     if (!board) {
       throw new NotFoundException('Board not found');
+    }
+
+    if (userId) {
+      const member = await this.workspaceMemberModel.findOne({
+        where: {
+          workspaceId: board.workspaceId,
+          userId,
+        },
+      });
+
+      if (!member) {
+        throw new ForbiddenException('You are not a member of this workspace');
+      }
+
+      if (member.role !== 'owner' && member.role !== 'editor') {
+        throw new ForbiddenException('Only workspace owners and editors can delete boards. Viewers have read-only access.');
+      }
     }
 
     await board.destroy();

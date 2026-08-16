@@ -44,19 +44,22 @@ export class WorkspacesService {
         },
       );
 
-      return workspace;
+      return {
+        ...workspace.get({ plain: true }),
+        role: 'owner',
+      };
     });
   }
 
   async index(req) {
-    return this.workspaceModel.findAll({
+    const workspaces = await this.workspaceModel.findAll({
       include: [
         {
           model: this.workspaceMemberModel,
           where: {
             userId: req.user.id,
           },
-          attributes: [],
+          attributes: ['role'],
         },
       ],
       attributes: {
@@ -72,24 +75,32 @@ export class WorkspacesService {
         ],
       },
     });
+
+    return workspaces.map((ws: any) => {
+      const plain = ws.get({ plain: true });
+      const role = plain.members?.[0]?.role || 'viewer';
+      return {
+        ...plain,
+        role,
+      };
+    });
   }
 
-  async findAllWorkspaceBoards(id:string){
-    let workspace= await this.workspaceModel.findOne({
-      where :{
-        id:id,
-      }
+  async findAllWorkspaceBoards(id: string) {
+    const workspace = await this.workspaceModel.findOne({
+      where: {
+        id,
+      },
     });
     if (!workspace) {
-       throw new NotFoundException('Workspace not found');
-    } 
+      throw new NotFoundException('Workspace not found');
+    }
 
     return this.boardModel.findAll({
-    where: {
-      workspaceId: workspace.id,
-    },
-  });
-
+      where: {
+        workspaceId: workspace.id,
+      },
+    });
   }
 
   async delete(id: string, req) {
@@ -122,6 +133,5 @@ export class WorkspacesService {
     return {
       message: 'Workspace deleted successfully',
     };
-}
-
+  }
 }

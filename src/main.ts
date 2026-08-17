@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: 'https://tasksync-vert.vercel.app/',
+    origin: 'https://tasksync-vert.vercel.app',
   });
   app.useGlobalPipes(
     new ValidationPipe({
